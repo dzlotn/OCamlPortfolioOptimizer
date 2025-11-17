@@ -1,0 +1,33 @@
+* 935899b 2025-11-14 18:01 EST Implemented basic implementation of the API and updated README.md| 
+|  FinalProject.opam |   5 ++
+|  README.md         |  43 ++++++++++-
+|  bin/api.ml        | 219 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+|  bin/dune          |   6 ++
+|  dune-project      |   2 +-
+|  5 files changed, 273 insertions(+), 2 deletions(-)
+
+* 8c1ac3e 2025-10-31 13:02 EDT Added Ani Jain to the readme| 
+|  README.md | 3 ++-
+|  1 file changed, 2 insertions(+), 1 deletion(-)
+
+* 3eebf07 2025-10-27 21:38 EDT Added Lulu Wang to the readme| 
+|  README.md | 1 +
+|  1 file changed, 1 insertion(+)
+
+* 51eec7f 2025-10-27 21:25 EDT Added Daniel (myself) to the readme| 
+|  README.md | 1 +
+|  1 file changed, 1 insertion(+)
+
+* 6b40db5 2025-10-27 21:18 EDT Initial Commit  
+   .gitignore                |  2 ++
+   .ocamlformat              |  6 ++++++
+   AUTHORS.md                |  0
+   FinalProject.opam         | 32 ++++++++++++++++++++++++++++++++
+   bin/dune                  |  4 ++++
+   bin/main.ml               |  1 +
+   dune                      |  1 +
+   dune-project              | 26 ++++++++++++++++++++++++++
+   lib/dune                  |  2 ++
+   test/dune                 |  3 +++
+   test/test_FinalProject.ml |  0
+   11 files changed, 77 insertions(+)
