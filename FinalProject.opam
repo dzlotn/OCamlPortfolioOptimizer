@@ -14,9 +14,9 @@ depends: [
   "ocaml"
   "lwt"
   "yojson"
+  "cohttp-lwt-unix"
   "lwt_ppx"
   "lwt_ssl"
-  "cohttp-lwt-unix"
   "odoc" {with-doc}
 ]
 build: [

@@ -6,5 +6,5 @@
 (executable
  (name api)
  (public_name api)
- (libraries cohttp-lwt-unix yojson lwt.unix lwt_ssl)
+ (libraries FinalProject cohttp-lwt-unix yojson lwt.unix lwt_ssl)
  (preprocess (pps lwt_ppx)))
