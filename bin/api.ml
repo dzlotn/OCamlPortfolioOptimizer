@@ -35,86 +35,79 @@ let read_api_key () =
   | Some key when String.trim key <> "" -> key
   | _ ->
       failwith
-        "Set the ALPHAVANTAGE_API_KEY environment variable with your API \
-         token from https://www.alphavantage.co/support/#api-key."
+        "Set the ALPHAVANTAGE_API_KEY environment variable with your API token \
+         from https://www.alphavantage.co/support/#api-key."
 
-type quote =
-  { symbol : string
-  ; name : string option
-  ; exchange : string option
-  ; price : float option
-  ; change : float option
-  ; percent : float option
-  ; volume : int option
-  }
+type quote = {
+  symbol : string;
+  name : string option;
+  exchange : string option;
+  price : float option;
+  change : float option;
+  percent : float option;
+  volume : int option;
+}
 
 let string_opt field json =
   match Yojson.Safe.Util.member field json with
   | `Null -> None
-  | value ->
-      (try Some (Yojson.Safe.Util.to_string value) with _ -> None)
+  | value -> ( try Some (Yojson.Safe.Util.to_string value) with _ -> None)
 
 let float_opt field json =
   match Yojson.Safe.Util.member field json with
   | `Null -> None
-  | value ->
-      (try Some (Yojson.Safe.Util.to_float value) with _ -> None)
+  | value -> ( try Some (Yojson.Safe.Util.to_float value) with _ -> None)
 
 let int_opt field json =
   match Yojson.Safe.Util.member field json with
   | `Null -> None
-  | value ->
-      (try Some (Yojson.Safe.Util.to_int value) with _ -> None)
+  | value -> ( try Some (Yojson.Safe.Util.to_int value) with _ -> None)
 
 let parse_float_string key json =
   match string_opt key json with
   | None -> None
-  | Some s -> (
-      try Some (float_of_string s) with _ -> None)
+  | Some s -> ( try Some (float_of_string s) with _ -> None)
 
 let parse_int_string key json =
   match string_opt key json with
   | None -> None
-  | Some s -> (
-      try Some (int_of_string s) with _ -> None)
+  | Some s -> ( try Some (int_of_string s) with _ -> None)
 
 let parse_percent_string key json =
   match string_opt key json with
   | None -> None
-  | Some s ->
+  | Some s -> (
       let trimmed = String.trim s in
       let len = String.length trimmed in
       let numeric =
-        if len > 0 && trimmed.[len - 1] = '%'
-        then String.sub trimmed 0 (len - 1)
+        if len > 0 && trimmed.[len - 1] = '%' then String.sub trimmed 0 (len - 1)
         else trimmed
       in
-      try Some (float_of_string numeric) with _ -> None
+      try Some (float_of_string numeric) with _ -> None)
 
 let decode_quote json =
   let open Yojson.Safe.Util in
   let symbol = json |> member "01. symbol" |> to_string in
-  { symbol
-  ; name = string_opt "name" json
-  ; exchange = string_opt "exchange" json
-  ; price = parse_float_string "05. price" json
-  ; change = parse_float_string "09. change" json
-  ; percent = parse_percent_string "10. change percent" json
-  ; volume = parse_int_string "06. volume" json
+  {
+    symbol;
+    name = string_opt "name" json;
+    exchange = string_opt "exchange" json;
+    price = parse_float_string "05. price" json;
+    change = parse_float_string "09. change" json;
+    percent = parse_percent_string "10. change percent" json;
+    volume = parse_int_string "06. volume" json;
   }
 
 let fetch_quote ~api_key symbol =
   let uri =
-    Uri.add_query_params' (Uri.of_string base_endpoint)
-      [ ("function", quote_function)
-      ; ("symbol", symbol)
-      ; ("apikey", api_key)
-      ]
+    Uri.add_query_params'
+      (Uri.of_string base_endpoint)
+      [ ("function", quote_function); ("symbol", symbol); ("apikey", api_key) ]
   in
   let* response, body = Cohttp_lwt_unix.Client.get uri in
   let status = Cohttp.Response.status response in
   let* body_str = Cohttp_lwt.Body.to_string body in
-  if Cohttp.Code.(is_success (code_of_status status)) then (
+  if Cohttp.Code.(is_success (code_of_status status)) then
     try
       let json = Yojson.Safe.from_string body_str in
       let open Yojson.Safe.Util in
@@ -125,8 +118,7 @@ let fetch_quote ~api_key symbol =
               (fun key ->
                 match member key json with
                 | `Null -> None
-                | value -> (
-                    try Some (to_string value) with _ -> None))
+                | value -> ( try Some (to_string value) with _ -> None))
               [ "Note"; "Information"; "Error Message" ]
           in
           let msg =
@@ -147,21 +139,21 @@ let fetch_quote ~api_key symbol =
         Printf.sprintf "Failed to parse payload for %s: %s" symbol
           (Printexc.to_string ex)
       in
-      Lwt.return (Error msg))
-    else
-      let msg =
-        Printf.sprintf "HTTP %s: %s"
-          (Cohttp.Code.string_of_status status)
-          (String.trim body_str)
-      in
       Lwt.return (Error msg)
+  else
+    let msg =
+      Printf.sprintf "HTTP %s: %s"
+        (Cohttp.Code.string_of_status status)
+        (String.trim body_str)
+    in
+    Lwt.return (Error msg)
 
 let fetch_quotes ~api_key symbols =
   let rec loop acc = function
     | [] -> Lwt.return (Ok (List.rev acc))
-    | symbol :: rest ->
+    | symbol :: rest -> (
         let* result = fetch_quote ~api_key symbol in
-        (match result with
+        match result with
         | Error _ as e -> Lwt.return e
         | Ok quote ->
             let* () =
@@ -190,32 +182,28 @@ let format_volume = function
   | Some v -> Printf.sprintf "%d" v
 
 let print_quote q =
-  let name =
-    value_or ~default:"(unknown company)" q.name
-  in
-  let exchange =
-    value_or ~default:"n/a" q.exchange
-  in
-  Printf.printf
-    "%-5s %-22s %-6s price=%8s change=%7s (%8s) volume=%s\n"
-    q.symbol name exchange (format_float q.price)
-    (format_float q.change) (format_percent q.percent)
-    (format_volume q.volume)
+  let name = value_or ~default:"(unknown company)" q.name in
+  let exchange = value_or ~default:"n/a" q.exchange in
+  Printf.printf "%-5s %-22s %-6s price=%8s change=%7s (%8s) volume=%s\n"
+    q.symbol name exchange (format_float q.price) (format_float q.change)
+    (format_percent q.percent) (format_volume q.volume)
 
 (* Fetch daily time series data for historical analysis *)
 let fetch_daily_prices ~api_key symbol =
   let uri =
-    Uri.add_query_params' (Uri.of_string base_endpoint)
-      [ ("function", daily_function)
-      ; ("symbol", symbol)
-      ; ("outputsize", "compact")
-      ; ("apikey", api_key)
+    Uri.add_query_params'
+      (Uri.of_string base_endpoint)
+      [
+        ("function", daily_function);
+        ("symbol", symbol);
+        ("outputsize", "compact");
+        ("apikey", api_key);
       ]
   in
   let* response, body = Cohttp_lwt_unix.Client.get uri in
   let status = Cohttp.Response.status response in
   let* body_str = Cohttp_lwt.Body.to_string body in
-  if Cohttp.Code.(is_success (code_of_status status)) then (
+  if Cohttp.Code.(is_success (code_of_status status)) then
     try
       let json = Yojson.Safe.from_string body_str in
       let open Yojson.Safe.Util in
@@ -226,8 +214,7 @@ let fetch_daily_prices ~api_key symbol =
               (fun key ->
                 match member key json with
                 | `Null -> None
-                | value -> (
-                    try Some (to_string value) with _ -> None))
+                | value -> ( try Some (to_string value) with _ -> None))
               [ "Note"; "Information"; "Error Message" ]
           in
           let msg =
@@ -245,25 +232,25 @@ let fetch_daily_prices ~api_key symbol =
           let prices =
             time_series
             |> List.map (fun (date, day_data) ->
-                   match day_data with
-                   | `Assoc fields ->
-                       let close_opt =
-                         List.find_map
-                           (fun (key, value) ->
-                             if key = "4. close" then
-                               match value with
-                               | `String s -> (
-                                   try Some (float_of_string s) with _ -> None)
-                               | _ -> None
-                             else None)
-                           fields
-                       in
-                       (date, close_opt)
-                   | _ -> (date, None))
+                match day_data with
+                | `Assoc fields ->
+                    let close_opt =
+                      List.find_map
+                        (fun (key, value) ->
+                          if key = "4. close" then
+                            match value with
+                            | `String s -> (
+                                try Some (float_of_string s) with _ -> None)
+                            | _ -> None
+                          else None)
+                        fields
+                    in
+                    (date, close_opt)
+                | _ -> (date, None))
             |> List.filter_map (fun (date, price_opt) ->
-                   match price_opt with
-                   | Some p -> Some (date, p)
-                   | None -> None)
+                match price_opt with
+                | Some p -> Some (date, p)
+                | None -> None)
             |> List.sort (fun (d1, _) (d2, _) -> String.compare d1 d2)
             |> List.map snd
           in
@@ -276,14 +263,14 @@ let fetch_daily_prices ~api_key symbol =
       | _ ->
           Lwt.return
             (Error
-               (Printf.sprintf
-                  "Unexpected format in Time Series (Daily) for %s" symbol))
+               (Printf.sprintf "Unexpected format in Time Series (Daily) for %s"
+                  symbol))
     with ex ->
       let msg =
         Printf.sprintf "Failed to parse daily prices for %s: %s" symbol
           (Printexc.to_string ex)
       in
-      Lwt.return (Error msg))
+      Lwt.return (Error msg)
   else
     let msg =
       Printf.sprintf "HTTP %s: %s"
@@ -324,8 +311,8 @@ let analyze_stock ~api_key symbol =
           | [] -> 0.0
           | p :: rest -> calc_max_dd p 0.0 rest
         in
-        (* Sharpe ratio: (avg return - risk free rate) / volatility
-           Using 0% risk-free rate for simplicity *)
+        (* Sharpe ratio: (avg return - risk free rate) / volatility Using 0%
+           risk-free rate for simplicity *)
         let avg_return =
           match returns with
           | [] -> 0.0
@@ -336,11 +323,11 @@ let analyze_stock ~api_key symbol =
         in
         let summary : Analytics.summary =
           {
-            avg_price
-          ; cumulative_return = cum_return
-          ; volatility
-          ; max_drawdown
-          ; sharpe
+            avg_price;
+            cumulative_return = cum_return;
+            volatility;
+            max_drawdown;
+            sharpe;
           }
         in
         Lwt.return (Ok (summary, cum_log_return))
@@ -352,12 +339,9 @@ let print_analysis symbol (summary : Analytics.summary) cum_log_return =
   Printf.printf "Average Price:        $%.2f\n" summary.avg_price;
   Printf.printf "Cumulative Return:    %.2f%%\n"
     (summary.cumulative_return *. 100.0);
-  Printf.printf "Cumulative Log Return: %.2f%%\n"
-    (cum_log_return *. 100.0);
-  Printf.printf "Annualized Volatility: %.2f%%\n"
-    (summary.volatility *. 100.0);
-  Printf.printf "Max Drawdown:         %.2f%%\n"
-    (summary.max_drawdown *. 100.0);
+  Printf.printf "Cumulative Log Return: %.2f%%\n" (cum_log_return *. 100.0);
+  Printf.printf "Annualized Volatility: %.2f%%\n" (summary.volatility *. 100.0);
+  Printf.printf "Max Drawdown:         %.2f%%\n" (summary.max_drawdown *. 100.0);
   Printf.printf "Sharpe Ratio:         %.2f\n" summary.sharpe;
   Printf.printf "========================\n"
 
@@ -368,15 +352,15 @@ let () =
      let* () =
        Lwt_io.printf
          "Fetching historical data and analyzing %d stocks (this will take a \
-          while due to rate limits, ~%.0fs per stock)...\n%!"
-         (List.length sample_symbols) throttle_seconds
+          while due to rate limits, ~%.0fs per stock)...\n\
+          %!"
+         (List.length sample_symbols)
+         throttle_seconds
      in
      let rec analyze_loop = function
        | [] -> Lwt.return_unit
        | symbol :: rest ->
-           let* () =
-             Lwt_io.printf "\nAnalyzing %s...\n%!" symbol
-           in
+           let* () = Lwt_io.printf "\nAnalyzing %s...\n%!" symbol in
            let* analysis_result = analyze_stock ~api_key symbol in
            let* () =
              match analysis_result with
@@ -393,4 +377,3 @@ let () =
            analyze_loop rest
      in
      analyze_loop sample_symbols)
-
