@@ -44,19 +44,18 @@ let variance lst =
   match lst with
   | [] -> raise Empty_series
   | _ ->
-    let sos = sum_of_squares lst in
-    let n = float_of_int (List.length lst) in
-    sos /. n
+      let sos = sum_of_squares lst in
+      let n = float_of_int (List.length lst) in
+      sos /. n
 
 let standard_deviation lst =
   let v = variance lst in
-  sqrt (v)
-
+  sqrt v
 
 (*Gets lst of prices and returns a lst of percent diffs*)
 let simple_return_ratio lst =
   match lst with
-  | [] | [_] -> raise Empty_series
+  | [] | [ _ ] -> raise Empty_series
   | _ ->
       let rec aux prev xs =
         match xs with
@@ -67,10 +66,11 @@ let simple_return_ratio lst =
       in
       aux (List.hd lst) (List.tl lst)
 
-(*Gets lst of prices and returns lst of logged percent diffs called simple returns*)
+(*Gets lst of prices and returns lst of logged percent diffs called simple
+  returns*)
 let log_return_ratio lst =
   match lst with
-  | [] | [_] -> raise Empty_series
+  | [] | [ _ ] -> raise Empty_series
   | _ ->
       let rec aux prev xs =
         match xs with

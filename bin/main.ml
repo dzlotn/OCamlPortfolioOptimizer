@@ -1,16 +1,33 @@
 open Lwt.Syntax
 
-(* All the questions and their potential answers the questionnaire will ask. Eventually, the algorithm will likely 
-use these responses and assign values to them to quantify a user's investment needs. *)
-type investment_goal = Growth | Income | Balanced | Preservation
+(* All the questions and their potential answers the questionnaire will ask.
+   Eventually, the algorithm will likely use these responses and assign values
+   to them to quantify a user's investment needs. *)
+type investment_goal =
+  | Growth
+  | Income
+  | Balanced
+  | Preservation
 
-type investment_experience = Beginner | Intermediate | Experienced
+type investment_experience =
+  | Beginner
+  | Intermediate
+  | Experienced
 
-type risk_tolerance = Conservative | Moderate | Aggressive
+type risk_tolerance =
+  | Conservative
+  | Moderate
+  | Aggressive
 
-type time_horizon = Short_term | Medium_term | Long_term
+type time_horizon =
+  | Short_term
+  | Medium_term
+  | Long_term
 
-type portfolio_size = Small | Medium | Large
+type portfolio_size =
+  | Small
+  | Medium
+  | Large
 
 type questionnaire_responses = {
   name : string;
@@ -27,7 +44,7 @@ let read_line () =
   let* line = Lwt_io.read_line Lwt_io.stdin in
   Lwt.return (String.trim line)
 
-(* reading user input with a prompt *)  
+(* reading user input with a prompt *)
 let prompt_input prompt =
   let* () = Lwt_io.printf "%s%!" prompt in
   read_line ()
@@ -84,9 +101,9 @@ let parse_yes_no input =
 let rec ask_name () =
   let* () = Lwt_io.printf "\n==== Question 1 ====\n%!" in
   let* name = prompt_input "1. What is your name? " in
-  if name = "" then (
+  if name = "" then
     let* () = Lwt_io.printf "Please enter a valid name.\n%!" in
-    ask_name ())
+    ask_name ()
   else Lwt.return name
 
 (* Question 2: Investment Goal *)
@@ -110,8 +127,7 @@ let rec ask_goal name =
 let rec ask_experience name =
   let* () = Lwt_io.printf "\n==== Question 3 ====\n%!" in
   let* () =
-    Lwt_io.printf
-      "%s, how experienced are you with stock investing?\n%!" name
+    Lwt_io.printf "%s, how experienced are you with stock investing?\n%!" name
   in
   let* () = Lwt_io.printf "  1. Beginner\n%!" in
   let* () = Lwt_io.printf "  2. Intermediate\n%!" in
@@ -127,18 +143,12 @@ let rec ask_experience name =
 let rec ask_risk name =
   let* () = Lwt_io.printf "\n==== Question 4 ====\n%!" in
   let* () =
-    Lwt_io.printf
-      "%s, how would you describe your risk tolerance?\n%!" name
+    Lwt_io.printf "%s, how would you describe your risk tolerance?\n%!" name
   in
+  let* () = Lwt_io.printf "  1. Conservative (low risk, stable returns)\n%!" in
+  let* () = Lwt_io.printf "  2. Moderate (balanced risk and return)\n%!" in
   let* () =
-    Lwt_io.printf
-      "  1. Conservative (low risk, stable returns)\n%!"
-  in
-  let* () =
-    Lwt_io.printf "  2. Moderate (balanced risk and return)\n%!" in
-  let* () =
-    Lwt_io.printf
-      "  3. Aggressive (high risk, higher potential returns)\n%!"
+    Lwt_io.printf "  3. Aggressive (high risk, higher potential returns)\n%!"
   in
   let* input = prompt_input "Enter your choice (1-3): " in
   match parse_risk input with
@@ -151,8 +161,7 @@ let rec ask_risk name =
 let rec ask_horizon name =
   let* () = Lwt_io.printf "\n==== Question 5 ====\n%!" in
   let* () =
-    Lwt_io.printf
-      "%s, what is your investment time horizon?\n%!" name
+    Lwt_io.printf "%s, what is your investment time horizon?\n%!" name
   in
   let* () = Lwt_io.printf "  1. Short-term (1-3 years)\n%!" in
   let* () = Lwt_io.printf "  2. Medium-term (3-7 years)\n%!" in
@@ -168,8 +177,8 @@ let rec ask_horizon name =
 let rec ask_portfolio_size name =
   let* () = Lwt_io.printf "\n==== Question 6 ====\n%!" in
   let* () =
-    Lwt_io.printf
-      "%s, how many stocks would you like for diversification?\n%!" name
+    Lwt_io.printf "%s, how many stocks would you like for diversification?\n%!"
+      name
   in
   let* () = Lwt_io.printf "  1. Small (3-5 stocks)\n%!" in
   let* () = Lwt_io.printf "  2. Medium (5-10 stocks)\n%!" in
@@ -187,7 +196,8 @@ let rec ask_willing_to_lose name =
   let* () =
     Lwt_io.printf
       "%s, are you willing to invest in assets that may temporarily lose \
-       money? (yes/no)\n%!"
+       money? (yes/no)\n\
+       %!"
       name
   in
   let* input = prompt_input "Enter your choice: " in
@@ -195,7 +205,8 @@ let rec ask_willing_to_lose name =
   | Some willing -> Lwt.return willing
   | None ->
       let* () =
-        Lwt_io.printf "Invalid choice. Please enter 'yes' or 'no'.\n%!" in
+        Lwt_io.printf "Invalid choice. Please enter 'yes' or 'no'.\n%!"
+      in
       ask_willing_to_lose name
 
 (* Helper functions to convert types to strings for display *)
@@ -269,14 +280,15 @@ let () =
   Lwt_main.run
     (let* () =
        Lwt_io.printf
-         "\n=== Portfolio Optimizer ===\n\nWelcome! Let's find the perfect \
-          portfolio for you.\n\n%!"
+         "\n\
+          === Portfolio Optimizer ===\n\n\
+          Welcome! Let's find the perfect portfolio for you.\n\n\
+          %!"
      in
      let* responses = run_questionnaire () in
      let* () = print_summary responses in
      let* () =
-       Lwt_io.printf
-         "\nThank you, %s! Your responses have been recorded.\n%!"
+       Lwt_io.printf "\nThank you, %s! Your responses have been recorded.\n%!"
          responses.name
      in
      Lwt.return_unit)
