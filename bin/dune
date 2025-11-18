@@ -4,9 +4,15 @@
  (libraries FinalProject cohttp-lwt-unix yojson lwt.unix lwt_ssl)
  (preprocess (pps lwt_ppx)))
 
+ (library
+ (name gui)
+ (modules gui)
+ (libraries FinalProject bogue)
+ (preprocess (pps lwt_ppx)))
+
 (executable
  (public_name FinalProject)
  (name main)
  (modules main)
- (libraries api lwt.unix)
+ (libraries api lwt.unix gui)
  (preprocess (pps lwt_ppx)))

@@ -354,20 +354,22 @@ let print_summary responses =
 
 (* Main execution *)
 let () =
-  Lwt_main.run
-    (let* () =
-       Lwt_io.printf
-         "\n\
-          === Portfolio Optimizer ===\n\n\
-          Welcome! Let's find the perfect portfolio for you.\n\n\
-          %!"
-     in
-     let* responses = run_questionnaire () in
-     let* () = print_summary responses in
-     let* () =
-       Lwt_io.printf "\nThank you, %s! Your responses have been recorded.\n%!"
-         responses.name
-     in
-     let* () = Api.run_api () in
+  if Array.length Sys.argv > 1 && Sys.argv.(1) = "gui" then Gui.run_gui ()
+  else
+    Lwt_main.run
+      (let* () =
+         Lwt_io.printf
+           "\n\
+            === Portfolio Optimizer ===\n\n\
+            Welcome! Let's find the perfect portfolio for you.\n\n\
+            %!"
+       in
+       let* responses = run_questionnaire () in
+       let* () = print_summary responses in
+       let* () =
+         Lwt_io.printf "\nThank you, %s! Your responses have been recorded.\n%!"
+           responses.name
+       in
+       let* () = Api.run_api () in
 
-     Lwt.return_unit)
+       Lwt.return_unit)

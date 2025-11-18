@@ -38,3 +38,8 @@ Follow the steps below to run it locally.
 
 If you need to adjust the tickers or throttle behavior, edit `diversified_symbols`
 and `throttle_seconds` near the top of `bin/api.ml`, then rerun the command above.
+
+## Installing GUI Library: Bogue
+$ opam install bogue
+
+Install anything else required if prompted
