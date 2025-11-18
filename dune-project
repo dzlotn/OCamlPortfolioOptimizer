@@ -1,4 +1,4 @@
-(lang dune 3.20)
+(lang dune 2.9)
 
 (name FinalProject)
 
@@ -19,7 +19,7 @@
  (name FinalProject)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml lwt yojson cohttp-lwt-unix lwt_ppx lwt_ssl)
+ (depends ocaml lwt yojson cohttp-lwt-unix lwt_ppx lwt_ssl bisect_ppx ounit2)
  (tags
   ("add topics" "to describe" your project)))
 

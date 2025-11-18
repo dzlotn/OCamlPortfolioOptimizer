@@ -1,6 +1,7 @@
+(*Defines a stock price series*)
 type series = float list
-(** This calculates risk metrics for each stock*)
 
+(*Defines a stock*)
 type stock = {
   ticker : string;
   prices : series;
@@ -8,6 +9,7 @@ type stock = {
 
 type return_series = float list
 
+(*Defines a dictionary with summary values*)
 type summary = {
   avg_price : float;
   cumulative_return : float;
@@ -16,10 +18,14 @@ type summary = {
   sharpe : float;
 }
 
+
+(*Exception handling*)
 exception Empty_series
 exception Length_mismatch of string
 
 let len_list lst = List.length lst
+
+(*Computes the avg stock price*)
 
 let avg xs =
   match xs with
@@ -28,6 +34,8 @@ let avg xs =
       let sum = List.fold_left ( +. ) 0.0 xs in
       let count = float_of_int (List.length xs) in
       sum /. count
+
+(*Computes the sum of squares of a list of stock vals*)
 
 let sum_of_squares lst =
   match lst with
@@ -40,6 +48,7 @@ let sum_of_squares lst =
           acc +. (d *. d))
         0.0 lst
 
+(*Computes the variance of a list of stock vals*)
 let variance lst =
   match lst with
   | [] -> raise Empty_series
@@ -47,6 +56,8 @@ let variance lst =
       let sos = sum_of_squares lst in
       let n = float_of_int (List.length lst) in
       sos /. n
+
+(*Computes the standard deviation of a list of stock vals*)
 
 let standard_deviation lst =
   let v = variance lst in
@@ -94,3 +105,33 @@ let cumulative_return lst =
 let annualized_volatility returns =
   let sd = standard_deviation returns in
   sd *. sqrt 252.0
+
+(*Calculate cumulative log return: sum of all log returns = log(final/initial)*)
+let cumulative_log_return log_returns =
+  match log_returns with
+  | [] -> 0.0
+  | _ -> List.fold_left ( +. ) 0.0 log_returns
+
+(*Calculate max drawdown: maximum peak-to-trough decline*)
+let max_drawdown prices =
+  let rec calc_max_dd peak max_dd = function
+    | [] -> max_dd
+    | p :: rest ->
+        let new_peak = max peak p in
+        let drawdown = (peak -. p) /. peak in
+        let new_max_dd = max max_dd drawdown in
+        calc_max_dd new_peak new_max_dd rest
+  in
+  match prices with
+  | [] -> 0.0
+  | p :: rest -> calc_max_dd p 0.0 rest
+
+(*Sharpe ratio: (avg return - risk free rate) / volatility
+  Using 0% risk-free rate for simplicity*)
+let sharpe_ratio returns volatility =
+  let avg_return =
+    match returns with
+    | [] -> 0.0
+    | _ -> avg returns *. 252.0
+  in
+  if volatility > 0.0 then avg_return /. volatility else 0.0

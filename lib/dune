@@ -1,2 +1,4 @@
 (library
- (name FinalProject))
+ (name FinalProject)
+ (instrumentation (backend bisect_ppx))
+ (wrapped false))

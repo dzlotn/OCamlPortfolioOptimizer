@@ -10,13 +10,15 @@ homepage: "https://github.com/username/reponame"
 doc: "https://url/to/documentation"
 bug-reports: "https://github.com/username/reponame/issues"
 depends: [
-  "dune" {>= "3.20"}
+  "dune" {>= "2.9"}
   "ocaml"
   "lwt"
   "yojson"
   "cohttp-lwt-unix"
   "lwt_ppx"
   "lwt_ssl"
+  "bisect_ppx"
+  "ounit2"
   "odoc" {with-doc}
 ]
 build: [
@@ -28,10 +30,11 @@ build: [
     name
     "-j"
     jobs
+    "--promote-install-files=false"
     "@install"
     "@runtest" {with-test}
     "@doc" {with-doc}
   ]
+  ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/username/reponame.git"
-x-maintenance-intent: ["(latest)"]

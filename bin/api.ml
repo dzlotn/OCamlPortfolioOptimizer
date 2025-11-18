@@ -1,5 +1,4 @@
 open Lwt.Syntax
-open FinalProject
 
 let base_endpoint = "https://www.alphavantage.co/query"
 let quote_function = "GLOBAL_QUOTE"
@@ -291,36 +290,9 @@ let analyze_stock ~api_key symbol =
         let volatility = Analytics.annualized_volatility returns in
         let cum_return = Analytics.cumulative_return prices in
         let avg_price = Analytics.avg prices in
-        (* Cumulative log return: sum of all log returns = log(final/initial) *)
-        let cum_log_return =
-          match log_returns with
-          | [] -> 0.0
-          | _ -> List.fold_left ( +. ) 0.0 log_returns
-        in
-        (* Calculate max drawdown: maximum peak-to-trough decline *)
-        let max_drawdown =
-          let rec calc_max_dd peak max_dd = function
-            | [] -> max_dd
-            | p :: rest ->
-                let new_peak = max peak p in
-                let drawdown = (peak -. p) /. peak in
-                let new_max_dd = max max_dd drawdown in
-                calc_max_dd new_peak new_max_dd rest
-          in
-          match prices with
-          | [] -> 0.0
-          | p :: rest -> calc_max_dd p 0.0 rest
-        in
-        (* Sharpe ratio: (avg return - risk free rate) / volatility Using 0%
-           risk-free rate for simplicity *)
-        let avg_return =
-          match returns with
-          | [] -> 0.0
-          | _ -> Analytics.avg returns *. 252.0
-        in
-        let sharpe =
-          if volatility > 0.0 then avg_return /. volatility else 0.0
-        in
+        let cum_log_return = Analytics.cumulative_log_return log_returns in
+        let max_drawdown = Analytics.max_drawdown prices in
+        let sharpe = Analytics.sharpe_ratio returns volatility in
         let summary : Analytics.summary =
           {
             avg_price;
@@ -345,35 +317,40 @@ let print_analysis symbol (summary : Analytics.summary) cum_log_return =
   Printf.printf "Sharpe Ratio:         %.2f\n" summary.sharpe;
   Printf.printf "========================\n"
 
-let () =
-  Lwt_main.run
-    (let api_key = read_api_key () in
-     let sample_symbols = [ "AAPL"; "MSFT"; "NVDA" ] in
-     let* () =
-       Lwt_io.printf
-         "Fetching historical data and analyzing %d stocks (this will take a \
-          while due to rate limits, ~%.0fs per stock)...\n\
-          %!"
-         (List.length sample_symbols)
-         throttle_seconds
-     in
-     let rec analyze_loop = function
-       | [] -> Lwt.return_unit
-       | symbol :: rest ->
-           let* () = Lwt_io.printf "\nAnalyzing %s...\n%!" symbol in
-           let* analysis_result = analyze_stock ~api_key symbol in
-           let* () =
-             match analysis_result with
-             | Ok (summary, cum_log_return) ->
-                 print_analysis symbol summary cum_log_return;
-                 Lwt.return_unit
-             | Error err ->
-                 Lwt_io.eprintf "Failed to analyze %s: %s\n%!" symbol err
-           in
-           let* () =
-             if rest = [] then Lwt.return_unit
-             else Lwt_unix.sleep throttle_seconds
-           in
-           analyze_loop rest
-     in
-     analyze_loop sample_symbols)
+let run_api () =
+  let api_key = read_api_key () in
+  let sample_symbols = [ "AAPL"; "MSFT"; "NVDA" ] in
+
+  let* () =
+    Lwt_io.printf
+      "Fetching historical data and analyzing %d stocks (this will take a \
+       while due to rate limits, ~%.0fs per stock)...\n\
+       %!"
+      (List.length sample_symbols)
+      throttle_seconds
+  in
+
+  let rec analyze_loop = function
+    | [] -> Lwt.return_unit
+    | symbol :: rest ->
+        let* () = Lwt_io.printf "\nAnalyzing %s...\n%!" symbol in
+        let* analysis_result = analyze_stock ~api_key symbol in
+
+        let* () =
+          match analysis_result with
+          | Ok (summary, cum_log_return) ->
+              print_analysis symbol summary cum_log_return;
+              Lwt.return_unit
+          | Error err ->
+              Lwt_io.eprintf "Failed to analyze %s: %s\n%!" symbol err
+        in
+
+        (* throttle only between symbols *)
+        let* () =
+          if rest = [] then Lwt.return_unit else Lwt_unix.sleep throttle_seconds
+        in
+
+        analyze_loop rest
+  in
+
+  analyze_loop sample_symbols

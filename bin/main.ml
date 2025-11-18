@@ -215,15 +215,15 @@ let rec ask_willing_to_lose name =
 let rec ask_has_current_investments name =
   let* () = Lwt_io.printf "\n==== Question 8 ====\n%!" in
   let* () =
-    Lwt_io.printf
-      "%s, do you currently have investments? (yes/no)\n%!" name
+    Lwt_io.printf "%s, do you currently have investments? (yes/no)\n%!" name
   in
   let* input = prompt_input "Enter your choice: " in
   match parse_yes_no input with
   | Some has_investments -> Lwt.return has_investments
   | None ->
       let* () =
-        Lwt_io.printf "Invalid choice. Please enter 'yes' or 'no'.\n%!" in
+        Lwt_io.printf "Invalid choice. Please enter 'yes' or 'no'.\n%!"
+      in
       ask_has_current_investments name
 
 (* Question 9: List current investments (only if yes to question 8) *)
@@ -232,31 +232,31 @@ let rec ask_list_investments name =
   let* () =
     Lwt_io.printf
       "%s, please list your current investments (ticker symbols, separated by \
-       commas):\n%!"
+       commas):\n\
+       %!"
       name
   in
   let* input = prompt_input "Enter your investments: " in
-  if String.trim input = "" then (
+  if String.trim input = "" then
     let* () =
       Lwt_io.printf
         "Please enter at least one investment. You can enter ticker symbols \
-         separated by commas.\n%!"
+         separated by commas.\n\
+         %!"
     in
-    ask_list_investments name)
-  else (
+    ask_list_investments name
+  else
     let investments =
-      input
-      |> String.split_on_char ','
-      |> List.map String.trim
+      input |> String.split_on_char ',' |> List.map String.trim
       |> List.filter (fun s -> s <> "")
     in
-    if investments = [] then (
+    if investments = [] then
       let* () =
         Lwt_io.printf
           "Please enter at least one valid investment ticker symbol.\n%!"
       in
-      ask_list_investments name)
-    else Lwt.return investments)
+      ask_list_investments name
+    else Lwt.return investments
 
 (* Helper functions to convert types to strings for display *)
 let goal_to_string = function
@@ -296,9 +296,9 @@ let run_questionnaire () =
   let* willing_to_lose = ask_willing_to_lose name in
   let* has_current_investments = ask_has_current_investments name in
   let* current_investments =
-    if has_current_investments then (
+    if has_current_investments then
       let* investments = ask_list_investments name in
-      Lwt.return (Some investments))
+      Lwt.return (Some investments)
     else Lwt.return None
   in
   Lwt.return
@@ -368,4 +368,6 @@ let () =
        Lwt_io.printf "\nThank you, %s! Your responses have been recorded.\n%!"
          responses.name
      in
+     let* () = Api.run_api () in
+
      Lwt.return_unit)

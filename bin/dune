@@ -1,10 +1,12 @@
+(library
+ (name api)
+ (modules api)
+ (libraries FinalProject cohttp-lwt-unix yojson lwt.unix lwt_ssl)
+ (preprocess (pps lwt_ppx)))
+
 (executable
  (public_name FinalProject)
  (name main)
- (libraries lwt.unix))
-
-(executable
- (name api)
- (public_name api)
- (libraries FinalProject cohttp-lwt-unix yojson lwt.unix lwt_ssl)
+ (modules main)
+ (libraries api lwt.unix)
  (preprocess (pps lwt_ppx)))
