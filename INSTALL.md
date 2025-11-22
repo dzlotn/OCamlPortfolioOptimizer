@@ -1,10 +1,10 @@
-## Getting the Stock API to work
+## Getting Everything to Work
 
-We provide a small OCaml demo in `bin/api.ml` that fetches quote data for 20
-large-cap tickers using the [Alpha Vantage Global Quote API](https://www.alphavantage.co/documentation/).
-Follow the steps below to run it locally.
+1. **Installation**
+   First, git clone or fork the repository onto your own computer
 
-1. **Install OCaml dependencies (one time)**
+
+2. **Install OCaml dependencies (one time)**
 
    ```bash
    opam install cohttp-lwt-unix yojson lwt lwt_ppx lwt_ssl
@@ -12,7 +12,7 @@ Follow the steps below to run it locally.
 
    These packages give us HTTPS support plus JSON parsing.
 
-2. **Set your Alpha Vantage key**
+3. **Set your Alpha Vantage key**
 
    Create a free API key at Alpha Vantage and export it before running the demo:
 
@@ -22,24 +22,20 @@ Follow the steps below to run it locally.
 
    Keeping the key in an environment variable avoids checking secrets into git.
 
-3. **Run the demo executable**
+4. **Run the demo executable**
 
    ```bash
-   dune exec bin/api.exe
+   dune exec bin/main.exe
    ```
-
-   - The program iterates over the 20-symbol portfolio and calls the `GLOBAL_QUOTE`
-     endpoint per ticker (Alpha Vantage’s free tier allows only 5 requests per minute),
-     so we throttle with a 15-second sleep between symbols. Expect the run to take
-     roughly five minutes.
-   - Successful output lists symbol, price, day change, change percentage, and volume
-     for each ticker. Errors from Alpha Vantage (e.g., rate-limit “Note” messages)
-     are surfaced directly in the terminal.
 
 If you need to adjust the tickers or throttle behavior, edit `diversified_symbols`
 and `throttle_seconds` near the top of `bin/api.ml`, then rerun the command above.
 
-## Installing GUI Library: Bogue
+
+
+
+
+## Unfinished: Installing GUI Library: Bogue
 $ opam install bogue
 
 Install anything else required if prompted

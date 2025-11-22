@@ -356,20 +356,36 @@ let print_summary responses =
 let () =
   (* if Array.length Sys.argv > 1 && Sys.argv.(1) = "gui" then Gui.run_gui () *)
   (* else *)
-    Lwt_main.run
-      (let* () =
-         Lwt_io.printf
-           "\n\
-            === Portfolio Optimizer ===\n\n\
-            Welcome! Let's find the perfect portfolio for you.\n\n\
-            %!"
-       in
-       let* responses = run_questionnaire () in
-       let* () = print_summary responses in
-       let* () =
-         Lwt_io.printf "\nThank you, %s! Your responses have been recorded.\n%!"
-           responses.name
-       in
-       let* () = Api.run_api () in
+  Lwt_main.run
+    (let* () =
+       Lwt_io.printf
+         "\n\
+          === Portfolio Optimizer ===\n\n\
+          Welcome! Let's find the perfect portfolio for you.\n\n\
+          %!"
+     in
+     let* responses = run_questionnaire () in
+     let* () = print_summary responses in
+     let* () =
+       Lwt_io.printf "\nThank you, %s! Your responses have been recorded.\n%!"
+         responses.name
+     in
+     let list_as_string lst = String.concat ", " lst in
 
-       Lwt.return_unit)
+     let stocks_string =
+       match responses.current_investments with
+       | Some lst -> list_as_string lst
+       | None -> "None"
+     in
+
+     let* () =
+       Lwt_io.printf "Calling the API with the following stocks: %s\n"
+         stocks_string
+     in
+     let* () =
+       Lwt_io.printf
+         "Stock Ingestion Pipeline Unfinished - Calling API on 3 Default Stocks\n"
+     in
+     let* () = Api.run_api () in
+
+     Lwt.return_unit)
