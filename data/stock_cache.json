@@ -1,0 +1,102 @@
+{
+  "AAPL": {
+    "symbol": "AAPL",
+    "avg_price": 243.66020000000012,
+    "cumulative_return": 0.34068952453116136,
+    "volatility": 0.22964831508702946,
+    "max_drawdown": 0.056063432835820944,
+    "sharpe": 3.3682064658017077,
+    "cum_log_return": 0.2931840521624389,
+    "last_updated": "2025-12-02"
+  },
+  "MS": {
+    "symbol": "MS",
+    "avg_price": 154.28290000000004,
+    "cumulative_return": 0.17441133569493655,
+    "volatility": 0.2142166275218712,
+    "max_drawdown": 0.06915018832391714,
+    "sharpe": 2.0186815289700615,
+    "cum_log_return": 0.16076703116032545,
+    "last_updated": "2025-12-02"
+  },
+  "XOM": {
+    "symbol": "XOM",
+    "avg_price": 112.71190000000004,
+    "cumulative_return": 0.012816011235955,
+    "volatility": 0.17866465113265517,
+    "max_drawdown": 0.07101474719101127,
+    "sharpe": 0.27110094743597507,
+    "cum_log_return": 0.012734581165077809,
+    "last_updated": "2025-12-02"
+  },
+  "NVDA": {
+    "symbol": "NVDA",
+    "avg_price": 181.3858,
+    "cumulative_return": 0.1059913451575548,
+    "volatility": 0.3352720035078356,
+    "max_drawdown": 0.1450927357032457,
+    "sharpe": 0.9327869489860455,
+    "cum_log_return": 0.10074207771469221,
+    "last_updated": "2025-12-02"
+  },
+  "GOOGL": {
+    "symbol": "GOOGL",
+    "avg_price": 240.2827000000001,
+    "cumulative_return": 0.7394249834765366,
+    "volatility": 0.2945822316452695,
+    "max_drawdown": 0.07125471105527641,
+    "sharpe": 4.940746890211979,
+    "cum_log_return": 0.5535545893430771,
+    "last_updated": "2025-12-02"
+  },
+  "PFE": {
+    "symbol": "PFE",
+    "avg_price": 24.818199999999987,
+    "cumulative_return": -0.007889546351084924,
+    "volatility": 0.28756496370543655,
+    "max_drawdown": 0.11472415052977715,
+    "sharpe": 0.07187567353268459,
+    "cum_log_return": -0.007920833491444517,
+    "last_updated": "2025-12-02"
+  },
+  "CAT": {
+    "symbol": "CAT",
+    "avg_price": 479.37089999999995,
+    "cumulative_return": 0.43529585725903835,
+    "volatility": 0.31003199718979835,
+    "max_drawdown": 0.06901511346513849,
+    "sharpe": 3.123531658955959,
+    "cum_log_return": 0.36137100026694535,
+    "last_updated": "2025-12-02"
+  },
+  "JNJ": {
+    "symbol": "JNJ",
+    "avg_price": 182.33519999999993,
+    "cumulative_return": 0.3095906134421631,
+    "volatility": 0.16713369561770539,
+    "max_drawdown": 0.03985133181912037,
+    "sharpe": 4.195696951742506,
+    "cum_log_return": 0.2697145795492257,
+    "last_updated": "2025-12-02"
+  },
+  "MSFT": {
+    "symbol": "MSFT",
+    "avg_price": 510.6739000000001,
+    "cumulative_return": -0.0258836626774283,
+    "volatility": 0.18010124597490756,
+    "max_drawdown": 0.12904237460106635,
+    "sharpe": -0.28058984768115325,
+    "cum_log_return": -0.026224539636014507,
+    "last_updated": "2025-12-02"
+  },
+  "BA": {
+    "symbol": "BA",
+    "avg_price": 216.80630000000002,
+    "cumulative_return": -0.1780109328160818,
+    "volatility": 0.2655038119487512,
+    "max_drawdown": 0.24542926952565502,
+    "sharpe": -1.7433959053754802,
+    "cum_log_return": -0.19602818427727986,
+    "last_updated": "2025-12-02"
+  }
+}
