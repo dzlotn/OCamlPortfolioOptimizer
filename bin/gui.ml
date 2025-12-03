@@ -1,6 +1,6 @@
 open Bogue
 
-let quiz_answers = ref []
+let quiz_answers = ref [||]
 let set_layout widget height = Layout.resident ~w:500 ~h:height widget
 
 let rounded_panel ?(bg_color = Style.Solid Draw.(opaque white))
@@ -211,7 +211,7 @@ let set_answers name goal exp risk horizon size willing inves curr =
     if Radiolist.get_index inves = Some 1 then "" else Widget.get_text curr
   in
   quiz_answers :=
-    [
+    [|
       Widget.get_text name;
       get_value goal;
       get_value exp;
@@ -221,7 +221,7 @@ let set_answers name goal exp risk horizon size willing inves curr =
       get_value willing;
       get_value inves;
       investments;
-    ]
+    |]
 
 let build_heading () =
   let heading =
@@ -388,3 +388,5 @@ let run_gui () =
   Layout.set_size homepage ~w:1250 ~h:820;
   let board = Main.of_layout homepage in
   Main.run board
+
+let get_responses () = !quiz_answers

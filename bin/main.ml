@@ -16,54 +16,6 @@ let prompt_input prompt =
   let* () = Lwt_io.printf "%s%!" prompt in
   read_line ()
 
-(* parsing the user's investment goal *)
-let parse_goal input =
-  match String.lowercase_ascii input with
-  | "1" | "growth" -> Some Growth
-  | "2" | "income" -> Some Income
-  | "3" | "balanced" -> Some Balanced
-  | "4" | "preservation" -> Some Preservation
-  | _ -> None
-
-(* parsing the user's investment experience *)
-let parse_experience input =
-  match String.lowercase_ascii input with
-  | "1" | "beginner" -> Some Beginner
-  | "2" | "intermediate" -> Some Intermediate
-  | "3" | "experienced" -> Some Experienced
-  | _ -> None
-
-(* parsing the user's risk tolerance *)
-let parse_risk input =
-  match String.lowercase_ascii input with
-  | "1" | "conservative" -> Some Conservative
-  | "2" | "moderate" -> Some Moderate
-  | "3" | "aggressive" -> Some Aggressive
-  | _ -> None
-
-(* parsing the user's time horizon *)
-let parse_horizon input =
-  match String.lowercase_ascii input with
-  | "1" | "short-term" | "short" -> Some Short_term
-  | "2" | "medium-term" | "medium" -> Some Medium_term
-  | "3" | "long-term" | "long" -> Some Long_term
-  | _ -> None
-
-(* parsing the user's portfolio size *)
-let parse_portfolio_size input =
-  match String.lowercase_ascii input with
-  | "1" | "small" -> Some Small
-  | "2" | "medium" -> Some Medium
-  | "3" | "large" -> Some Large
-  | _ -> None
-
-(* parsing the user's yes/no response *)
-let parse_yes_no input =
-  match String.lowercase_ascii input with
-  | "yes" | "y" | "true" -> Some true
-  | "no" | "n" | "false" -> Some false
-  | _ -> None
-
 (* Question 1: Name *)
 let rec ask_name () =
   let* () = Lwt_io.printf "\n==== Question 1 ====\n%!" in
@@ -317,18 +269,135 @@ let print_summary responses =
   in
   Lwt_io.printf "============================\n%!"
 
+let get_risk_profile responses =
+  let* () = Lwt_io.printf "\n=== Calculating Your Risk Profile ===\n%!" in
+  let risk_profile = Risk_profile.calculate_risk_profile responses in
+  let* () =
+    Lwt_io.printf "%s\n%!" (Risk_profile.risk_profile_to_string risk_profile)
+  in
+
+  (* Load cache and check current investments *)
+  let cache = Stock_cache.load_cache () in
+  let current_stocks =
+    match responses.current_investments with
+    | Some lst -> lst
+    | None -> []
+  in
+
+  (* Check current stocks against risk profile *)
+  let* () =
+    if current_stocks <> [] then
+      let* () =
+        Lwt_io.printf "\n=== Analyzing Your Current Investments ===\n%!"
+      in
+
+      let rec check_stocks = function
+        | [] -> Lwt.return_unit
+        | symbol :: rest ->
+            let symbol_upper = String.uppercase_ascii symbol in
+            let* () = Lwt_io.printf "\nChecking %s...\n%!" symbol_upper in
+            let* () =
+              match Stock_cache.get_stock_from_cache cache symbol_upper with
+              | Some stock ->
+                  let matches, reason =
+                    Optimizer.check_stock_against_profile risk_profile stock
+                  in
+                  if matches then
+                    Lwt_io.printf "✓ %s: %s\n%!" symbol_upper reason
+                  else Lwt_io.printf "✗ %s: %s\n%!" symbol_upper reason
+              | None -> (
+                  let* () =
+                    Lwt_io.printf "  %s not in cache, fetching from API...\n%!"
+                      symbol_upper
+                  in
+                  (* Stock not in cache, fetch from API *)
+                  let* result = Refresh.refresh_single_stock symbol_upper in
+                  match result with
+                  | Some (summary, _) ->
+                      let stock =
+                        {
+                          Stock_cache.symbol = symbol_upper;
+                          summary;
+                          cum_log_return = 0.0;
+                          last_updated = Stock_cache.current_date_string ();
+                        }
+                      in
+                      let matches, reason =
+                        Optimizer.check_stock_against_profile risk_profile stock
+                      in
+                      if matches then
+                        Lwt_io.printf "✓ %s: %s\n%!" symbol_upper reason
+                      else Lwt_io.printf "✗ %s: %s\n%!" symbol_upper reason
+                  | None ->
+                      (* Error already printed by refresh_single_stock *)
+                      Lwt.return_unit)
+            in
+            check_stocks rest
+      in
+
+      check_stocks current_stocks
+    else Lwt.return_unit
+  in
+  (* Get stock recommendations *)
+  let* () =
+    Lwt_io.printf
+      "\n=== Stock Recommendations Based on Your Risk Profile ===\n%!"
+  in
+  let recommendations =
+    Optimizer.get_recommendations risk_profile current_stocks
+  in
+  if recommendations = [] then
+    let* () =
+      Lwt_io.printf
+        "No recommendations available. Please run 'refresh' command to \
+         populate the stock cache.\n\
+         %!"
+    in
+    Lwt.return_unit
+  else
+    let* () =
+      Lwt_io.printf "Here are %d stocks that match your risk profile:\n\n%!"
+        (List.length recommendations)
+    in
+    let rec print_recommendations index = function
+      | [] -> Lwt.return_unit
+      | rec_item :: rest ->
+          let* () =
+            Lwt_io.printf
+              "%d. %s (Score: %.2f)\n\
+              \   Reason: %s\n\
+              \   Volatility: %.2f%%, Sharpe: %.2f, Max Drawdown: %.2f%%\n\n\
+               %!"
+              index rec_item.symbol rec_item.score rec_item.reason
+              (rec_item.summary.volatility *. 100.0)
+              rec_item.summary.sharpe
+              (rec_item.summary.max_drawdown *. 100.0)
+          in
+          print_recommendations (index + 1) rest
+    in
+    let* () = print_recommendations 1 recommendations in
+    let* () =
+      Lwt_io.printf "\nThank you, %s! Your portfolio analysis is complete.\n%!"
+        responses.name
+    in
+    Lwt.return_unit
+
+(* Helper function for reading GUI responses *)
+let read_file_responses filename =
+  let ic = open_in_bin filename in
+  let responses = (Marshal.from_channel ic : questionnaire_responses) in
+  close_in ic;
+  Lwt.return responses
+
 (* Main execution *)
 let () =
   (* Check command line arguments *)
-  if Array.length Sys.argv > 1 then
+  if Array.length Sys.argv > 1 then (
     match Sys.argv.(1) with
     | "refresh" ->
         (* Refresh command - use separate executable without GUI *)
         let symbols =
-          if Array.length Sys.argv > 2 then
-            "\"" ^ Sys.argv.(2) ^ "\""
-          else
-            ""
+          if Array.length Sys.argv > 2 then "\"" ^ Sys.argv.(2) ^ "\"" else ""
         in
         let cmd =
           Printf.sprintf "dune exec -- FinalProject-refresh %s" symbols
@@ -338,7 +407,22 @@ let () =
     | "gui" ->
         (* Run GUI version - redirect to GUI executable *)
         let exit_code = Sys.command "dune exec -- FinalProject-gui" in
-        exit exit_code
+        if exit_code = 0 then
+          let response_file = "quiz_responses.tmp" in
+          if Sys.file_exists response_file then
+            Lwt_main.run
+              (let* responses = read_file_responses response_file in
+               let* () =
+                 Lwt.catch
+                   (fun () -> Lwt.return (Sys.remove response_file))
+                   (fun _ -> Lwt.return_unit)
+               in
+               let* () = print_summary responses in
+               get_risk_profile responses)
+          else (
+            Printf.printf "GUI closed without completing questionnaire.\n";
+            exit 0)
+        else exit exit_code
     | "cli" | "command-line" | "terminal" ->
         (* Explicitly run command-line version *)
         Lwt_main.run
@@ -353,132 +437,21 @@ let () =
            let* () = print_summary responses in
 
            (* Calculate risk profile *)
-           let* () = Lwt_io.printf "\n=== Calculating Your Risk Profile ===\n%!" in
-           let risk_profile = Risk_profile.calculate_risk_profile responses in
-           let* () =
-             Lwt_io.printf "%s\n%!" (Risk_profile.risk_profile_to_string risk_profile)
-           in
-
-           (* Load cache and check current investments *)
-           let cache = Stock_cache.load_cache () in
-           let current_stocks =
-             match responses.current_investments with
-             | Some lst -> lst
-             | None -> []
-           in
-
-           (* Check current stocks against risk profile *)
-           let* () =
-             if current_stocks <> [] then (
-               let* () =
-                 Lwt_io.printf
-                   "\n=== Analyzing Your Current Investments ===\n%!"
-               in
-
-               let rec check_stocks = function
-                 | [] -> Lwt.return_unit
-                 | symbol :: rest ->
-                     let symbol_upper = String.uppercase_ascii symbol in
-                     let* () = Lwt_io.printf "\nChecking %s...\n%!" symbol_upper in
-                     let* () =
-                       match Stock_cache.get_stock_from_cache cache symbol_upper with
-                       | Some stock ->
-                           let matches, reason =
-                             Optimizer.check_stock_against_profile risk_profile stock
-                           in
-                           if matches then
-                             Lwt_io.printf "✓ %s: %s\n%!" symbol_upper reason
-                           else
-                             Lwt_io.printf "✗ %s: %s\n%!" symbol_upper reason
-                       | None ->
-                           (* Stock not in cache, fetch from API *)
-                           let* result = Refresh.refresh_single_stock symbol_upper in
-                           (match result with
-                           | Some (summary, _) ->
-                               let stock =
-                                 {
-                                   Stock_cache.symbol = symbol_upper;
-                                   summary;
-                                   cum_log_return = 0.0;
-                                   last_updated = Stock_cache.current_date_string ();
-                                 }
-                               in
-                               let matches, reason =
-                                 Optimizer.check_stock_against_profile risk_profile stock
-                               in
-                               if matches then
-                                 Lwt_io.printf "✓ %s: %s\n%!" symbol_upper reason
-                               else
-                                 Lwt_io.printf "✗ %s: %s\n%!" symbol_upper reason
-                           | None ->
-                               (* Error already printed by refresh_single_stock *)
-                               Lwt.return_unit)
-                     in
-                     check_stocks rest
-               in
-
-               check_stocks current_stocks)
-             else
-               Lwt.return_unit
-           in
-           (* Get stock recommendations *)
-           let* () =
-             Lwt_io.printf
-               "\n=== Stock Recommendations Based on Your Risk Profile ===\n%!"
-           in
-           let recommendations =
-             Optimizer.get_recommendations risk_profile current_stocks
-           in
-           if recommendations = [] then
-             let* () =
-               Lwt_io.printf
-                 "No recommendations available. Please run 'refresh' command to \
-                  populate the stock cache.\n%!"
-             in
-             Lwt.return_unit
-           else
-             let* () =
-               Lwt_io.printf
-                 "Here are %d stocks that match your risk profile:\n\n%!"
-                 (List.length recommendations)
-             in
-             let rec print_recommendations index = function
-               | [] -> Lwt.return_unit
-               | rec_item :: rest ->
-                   let* () =
-                     Lwt_io.printf
-                       "%d. %s (Score: %.2f)\n   Reason: %s\n   Volatility: %.2f%%, \
-                        Sharpe: %.2f, Max Drawdown: %.2f%%\n\n%!"
-                       index rec_item.symbol
-                       rec_item.score rec_item.reason
-                       (rec_item.summary.volatility *. 100.0)
-                       rec_item.summary.sharpe
-                       (rec_item.summary.max_drawdown *. 100.0)
-                   in
-                   print_recommendations (index + 1) rest
-             in
-             let* () = print_recommendations 1 recommendations in
-             let* () =
-               Lwt_io.printf
-                 "\nThank you, %s! Your portfolio analysis is complete.\n%!"
-                 responses.name
-             in
-             Lwt.return_unit)
+           get_risk_profile responses)
     | _ ->
         (* Unknown command, show help *)
         Printf.printf
           "Usage: FinalProject [command]\n\n\
            Commands:\n\
-           \  (no args)  - Run command-line questionnaire (default)\n\
-           \  gui        - Run graphical user interface\n\
-           \  cli         - Run command-line questionnaire (explicit)\n\
-           \  refresh    - Refresh stock cache from API\n\n\
+          \  (no args)  - Run command-line questionnaire (default)\n\
+          \  gui        - Run graphical user interface\n\
+          \  cli         - Run command-line questionnaire (explicit)\n\
+          \  refresh    - Refresh stock cache from API\n\n\
            Examples:\n\
-           \  dune exec -- FinalProject           # Run CLI questionnaire\n\
-           \  dune exec -- FinalProject gui       # Run GUI\n\
-           \  dune exec -- FinalProject refresh AAPL,MSFT\n"
-        ;
-        exit 1
+          \  dune exec -- FinalProject           # Run CLI questionnaire\n\
+          \  dune exec -- FinalProject gui       # Run GUI\n\
+          \  dune exec -- FinalProject refresh AAPL,MSFT\n";
+        exit 1)
   else
     (* No arguments - run command-line questionnaire by default *)
     Lwt_main.run
@@ -493,118 +466,4 @@ let () =
        let* () = print_summary responses in
 
        (* Calculate risk profile *)
-       let* () = Lwt_io.printf "\n=== Calculating Your Risk Profile ===\n%!" in
-       let risk_profile = Risk_profile.calculate_risk_profile responses in
-       let* () =
-         Lwt_io.printf "%s\n%!" (Risk_profile.risk_profile_to_string risk_profile)
-       in
-
-       (* Load cache and check current investments *)
-       let cache = Stock_cache.load_cache () in
-       let current_stocks =
-         match responses.current_investments with
-         | Some lst -> lst
-         | None -> []
-       in
-
-       (* Check current stocks against risk profile *)
-       let* () =
-         if current_stocks <> [] then (
-           let* () =
-             Lwt_io.printf
-               "\n=== Analyzing Your Current Investments ===\n%!"
-           in
-
-           let rec check_stocks = function
-             | [] -> Lwt.return_unit
-             | symbol :: rest ->
-                 let symbol_upper = String.uppercase_ascii symbol in
-                 let* () = Lwt_io.printf "\nChecking %s...\n%!" symbol_upper in
-                 let* () =
-                   match Stock_cache.get_stock_from_cache cache symbol_upper with
-                   | Some stock ->
-                       let matches, reason =
-                         Optimizer.check_stock_against_profile risk_profile stock
-                       in
-                       if matches then
-                         Lwt_io.printf "✓ %s: %s\n%!" symbol_upper reason
-                       else
-                         Lwt_io.printf "✗ %s: %s\n%!" symbol_upper reason
-                   | None ->
-                       (* Stock not in cache, fetch from API *)
-                       let* () =
-                         Lwt_io.printf
-                           "  %s not in cache, fetching from API...\n%!" symbol_upper
-                       in
-                       let* result = Refresh.refresh_single_stock symbol_upper in
-                       (match result with
-                       | Some (summary, _) ->
-                           let stock =
-                             {
-                               Stock_cache.symbol = symbol_upper;
-                               summary;
-                               cum_log_return = 0.0;
-                               last_updated = Stock_cache.current_date_string ();
-                             }
-                           in
-                           let matches, reason =
-                             Optimizer.check_stock_against_profile risk_profile stock
-                           in
-                           if matches then
-                             Lwt_io.printf "✓ %s: %s\n%!" symbol_upper reason
-                           else
-                             Lwt_io.printf "✗ %s: %s\n%!" symbol_upper reason
-                       | None ->
-                           Lwt_io.printf
-                             "  ✗ Failed to fetch data for %s\n%!" symbol_upper)
-                 in
-                 check_stocks rest
-           in
-
-           check_stocks current_stocks)
-         else
-           Lwt.return_unit
-       in
-       (* Get stock recommendations *)
-       let* () =
-         Lwt_io.printf
-           "\n=== Stock Recommendations Based on Your Risk Profile ===\n%!"
-       in
-       let recommendations =
-         Optimizer.get_recommendations risk_profile current_stocks
-       in
-       if recommendations = [] then
-         let* () =
-           Lwt_io.printf
-             "No recommendations available. Please run 'refresh' command to \
-              populate the stock cache.\n%!"
-         in
-         Lwt.return_unit
-       else
-         let* () =
-           Lwt_io.printf
-             "Here are %d stocks that match your risk profile:\n\n%!"
-             (List.length recommendations)
-         in
-         let rec print_recommendations index = function
-           | [] -> Lwt.return_unit
-           | rec_item :: rest ->
-               let* () =
-                 Lwt_io.printf
-                   "%d. %s (Score: %.2f)\n   Reason: %s\n   Volatility: %.2f%%, \
-                    Sharpe: %.2f, Max Drawdown: %.2f%%\n\n%!"
-                   index rec_item.symbol
-                   rec_item.score rec_item.reason
-                   (rec_item.summary.volatility *. 100.0)
-                   rec_item.summary.sharpe
-                   (rec_item.summary.max_drawdown *. 100.0)
-               in
-               print_recommendations (index + 1) rest
-         in
-         let* () = print_recommendations 1 recommendations in
-         let* () =
-           Lwt_io.printf
-             "\nThank you, %s! Your portfolio analysis is complete.\n%!"
-             responses.name
-         in
-         Lwt.return_unit)
+       get_risk_profile responses)
