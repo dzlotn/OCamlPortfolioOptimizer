@@ -1,6 +1,21 @@
 open Questionnaire_types
 
-(* Risk profile with numeric scores *)
+(* 
+ * Representation Invariant (RI):
+ * - risk_score is in range [0.0, 1.0] (0 = conservative, 1 = aggressive)
+ * - target_volatility > 0 (target annualized volatility)
+ * - min_sharpe can be any float (minimum acceptable Sharpe ratio)
+ * - max_drawdown_tolerance is in range [0.0, 1.0] (maximum acceptable drawdown)
+ * - portfolio_size > 0 (number of stocks in portfolio)
+ * 
+ * Abstraction Function (AF):
+ * - A risk_profile represents a user's quantitative investment risk preferences
+ * - risk_score: overall risk tolerance score (0.0 = very conservative, 1.0 = very aggressive)
+ * - target_volatility: desired annualized volatility level
+ * - min_sharpe: minimum acceptable risk-adjusted return
+ * - max_drawdown_tolerance: maximum acceptable peak-to-trough decline
+ * - portfolio_size: number of stocks to include in recommended portfolio
+ *)
 type risk_profile = {
   risk_score : float;
   target_volatility : float;

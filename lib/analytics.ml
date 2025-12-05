@@ -1,7 +1,32 @@
-(*Defines a stock price series*)
+(* 
+ * Representation Invariant (RI):
+ * - The list is non-empty (enforced by Empty_series exception in functions)
+ * - All floats are finite (not NaN or infinity)
+ * - Values represent prices, so should be positive (though not strictly enforced)
+ * 
+ * Abstraction Function (AF):
+ * - A series represents a time-ordered sequence of daily closing stock prices
+ * - The list [p1; p2; ...; pn] represents prices from oldest to newest
+ * - Each float represents one day's closing price in the same currency
+ *)
 type series = float list
 
-(*Defines a dictionary with summary values*)
+(* 
+ * Representation Invariant (RI):
+ * - avg_price > 0 (average price must be positive)
+ * - volatility >= 0 (volatility is non-negative)
+ * - max_drawdown >= 0 and max_drawdown <= 1 (drawdown is a percentage 0-100%)
+ * - sharpe can be any float (can be negative for poor risk-adjusted returns)
+ * - cumulative_return can be any float (negative for losses)
+ * 
+ * Abstraction Function (AF):
+ * - A summary represents aggregated financial metrics for a stock over a time period
+ * - avg_price: average closing price over the period
+ * - cumulative_return: total return as a decimal (e.g., 0.15 = 15% return)
+ * - volatility: annualized volatility (standard deviation of returns * sqrt(252))
+ * - max_drawdown: maximum peak-to-trough decline as a decimal (0.0 to 1.0)
+ * - sharpe: risk-adjusted return metric (higher is better, typically -1 to 3)
+ *)
 type summary = {
   avg_price : float;
   cumulative_return : float;

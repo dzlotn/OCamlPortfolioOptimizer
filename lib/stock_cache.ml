@@ -1,6 +1,19 @@
 open Analytics
 
-(* Stock analysis data stored in cache *)
+(* 
+ * Representation Invariant (RI):
+ * - symbol is non-empty and uppercase (enforced by update_cache)
+ * - last_updated is in ISO format "YYYY-MM-DD" (enforced by current_date_string)
+ * - All summary fields satisfy summary's RI
+ * - cum_log_return is finite (not NaN or infinity)
+ * 
+ * Abstraction Function (AF):
+ * - A cached_stock represents a snapshot of stock analysis data at a point in time
+ * - symbol: stock ticker symbol (e.g., "AAPL")
+ * - summary: financial metrics calculated from historical data
+ * - cum_log_return: cumulative log return over the analysis period
+ * - last_updated: date when this data was last fetched from the API
+ *)
 type cached_stock = {
   symbol : string;
   summary : summary;

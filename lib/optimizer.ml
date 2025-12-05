@@ -2,7 +2,20 @@ open Analytics
 open Risk_profile
 open Stock_cache
 
-(* Stock recommendation with score *)
+(* 
+ * Representation Invariant (RI):
+ * - symbol is non-empty and uppercase
+ * - score is in range [0.0, 1.0] (0 = poor match, 1 = perfect match)
+ * - summary satisfies summary's RI
+ * - reason is non-empty (explanation for the recommendation)
+ * 
+ * Abstraction Function (AF):
+ * - A recommendation represents a stock suggestion with a match score
+ * - symbol: stock ticker symbol (e.g., "AAPL")
+ * - score: how well the stock matches the user's risk profile (0.0 to 1.0)
+ * - summary: financial metrics for the stock
+ * - reason: human-readable explanation of why this stock was recommended
+ *)
 type recommendation = {
   symbol : string;
   score : float;

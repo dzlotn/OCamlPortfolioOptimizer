@@ -25,6 +25,24 @@ type portfolio_size =
   | Medium
   | Large
 
+(* 
+ * Representation Invariant (RI):
+ * - name is non-empty
+ * - current_investments is Some lst only when has_current_investments = true
+ * - If current_investments = Some lst, then lst contains non-empty uppercase stock symbols
+ * 
+ * Abstraction Function (AF):
+ * - A questionnaire_responses represents a user's answers to the investment questionnaire
+ * - name: user's name
+ * - goal: primary investment objective (Growth, Income, Balanced, or Preservation)
+ * - experience: level of investment experience (Beginner, Intermediate, or Experienced)
+ * - risk: risk tolerance level (Conservative, Moderate, or Aggressive)
+ * - horizon: investment time horizon (Short_term, Medium_term, or Long_term)
+ * - portfolio_size: desired portfolio size category (Small, Medium, or Large)
+ * - willing_to_lose: whether user is willing to accept potential losses
+ * - has_current_investments: whether user currently holds investments
+ * - current_investments: optional list of current stock symbols (if has_current_investments = true)
+ *)
 type questionnaire_responses = {
   name : string;
   goal : investment_goal;
