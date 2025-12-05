@@ -15,5 +15,5 @@ let () =
     else
       None
   in
-  Lwt_main.run (Refresh.refresh_stock_cache ?symbols ())
+  Lwt_main.run (Refresh.refresh_stock_cache ~symbols ())
 

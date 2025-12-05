@@ -4,7 +4,6 @@
 
 (test
  (name test_refresh)
- (instrumentation (backend bisect_ppx))
  (libraries ounit2 FinalProject api lwt.unix bisect_ppx.runtime bisect_ppx.common))
 
 (test
