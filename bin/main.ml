@@ -231,7 +231,7 @@ let print_summary responses =
     Lwt_io.printf "Time Horizon: %s\n%!" (horizon_to_string responses.horizon)
   in
   let* () =
-    Lwt_io.printf "Portfolio Size: %s\n%!"
+    Lwt_io.printf "Number of Stock Recommendations: %s\n%!"
       (portfolio_size_to_string responses.portfolio_size)
   in
   let* () =
@@ -524,6 +524,8 @@ let () =
         exit 1)
   else
     (* No arguments - run command-line questionnaire by default *)
+    (* Initialize random number generator for portfolio size selection *)
+    Random.self_init ();
     Lwt_main.run
       (let* () =
          Lwt_io.printf

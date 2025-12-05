@@ -63,12 +63,12 @@ let calculate_risk_profile (responses : questionnaire_responses) : risk_profile 
   (* Max drawdown tolerance: conservative = 0.10, aggressive = 0.30 *)
   let max_drawdown_tolerance = 0.10 +. (risk_score *. 0.20) in
 
-  (* Portfolio size *)
+  (* Portfolio size - randomly select from the specified range *)
   let portfolio_size =
     match responses.portfolio_size with
-    | Small -> 4
-    | Medium -> 7
-    | Large -> 12
+    | Small -> 3 + Random.int 3 (* 3-5 stocks: 3 + (0, 1, or 2) *)
+    | Medium -> 5 + Random.int 6 (* 5-10 stocks: 5 + (0, 1, 2, 3, 4, or 5) *)
+    | Large -> 10 + Random.int 6 (* 10-15 stocks: 10 + (0, 1, 2, 3, 4, or 5) *)
   in
 
   {
