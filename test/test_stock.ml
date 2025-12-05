@@ -73,7 +73,11 @@ let test_sharpe_ratio _ =
   assert_bool "sharpe" (float_eq (sharpe_ratio returns vol) expected);
 
   (* Zero volatility => sharpe = 0 *)
-  assert_bool "zero vol" (float_eq (sharpe_ratio [ 1.0 ] 0.0) 0.0)
+  assert_bool "zero vol" (float_eq (sharpe_ratio [ 1.0 ] 0.0) 0.0);
+  
+  (* Empty returns => avg_return = 0.0, so sharpe = 0 *)
+  assert_bool "empty returns" (float_eq (sharpe_ratio [] 0.1) 0.0);
+  assert_bool "empty returns with zero vol" (float_eq (sharpe_ratio [] 0.0) 0.0)
 
 let suite =
   "stock_tests"
