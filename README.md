@@ -125,14 +125,6 @@ Each stock is scored based on:
 - **Cache Location**: `data/stock_cache.json`
 - **Default Stocks**: Defined in `lib/refresh.ml`
 
-## 👥 Authors
-
-- **Daniel Zlotnick** (dz344)
-- **Lulu Wang** (lw765)
-- **Ani Jain** (aj655)
-- **Priya Gokhale** (pg492)
-
-
 ---
 
 **Made with ❤️ using OCaml**
